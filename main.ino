@@ -183,7 +183,7 @@ void loop() {
       if (receivedpacket[0] != command) {
         retry ++;
         if (retry > 5 ) {
-          state = BIND_1;
+          state = FIND_C;
           retry = 0;
          }
         return;
@@ -270,7 +270,7 @@ void loop() {
           }
           kmob1 = receivedpacket[14];
           kmob2 = receivedpacket[12];
-          Serial.print("throttle = ");
+          /*Serial.print("throttle = ");
             Serial.print(throttle);
             Serial.print(" rudder = ");
             Serial.print(rudder);
@@ -284,6 +284,7 @@ void loop() {
             Serial.print(" RSSI = ");
             Serial.print(percentrssi);
             Serial.println("");
+            */
 #ifdef PPM
           update_ppm();
 #endif
@@ -360,4 +361,3 @@ void loop() {
   //A7105_scanchannels(allowed_ch);
   //eavesdrop();
 }
-
