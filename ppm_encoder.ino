@@ -9,7 +9,7 @@
 #define FRAME_LENGTH 22500  //set the PPM frame length in microseconds (1ms = 1000�s)
 #define PULSE_LENGTH 300  //set the pulse length
 #define onState 1  //set polarity of the pulses: 1 is positive, 0 is negative
-#define sigPin 6  //set PPM signal output pin on the arduino
+#define sigPin 13  //set PPM signal output pin on the arduino
 #define MIN_VALUE 972
 #define MAX_VALUE 2000
 
@@ -25,6 +25,7 @@ void ppm_setup() {
     ppm[i] = CHANNEL_DEFAULT_VALUE;
   }
 
+  Serial.println("PPM Setup");
   pinMode(sigPin, OUTPUT);
   digitalWrite(sigPin, !onState);  //set the PPM signal pin to the default state (off)
 
@@ -35,7 +36,7 @@ void ppm_setup() {
   TCCR1A |= (1 << COM1A1);    // set COM1A1 and clear COM1A0 in order to
   TCCR1A &= ~(1 << COM1A0);   //    clear OC1A (PA6) on next compare match
 
-  OCR1A = 100 / 2;  // compare match register, change this
+  OCR1A = 100;  // compare match register, change this
   TCCR1B |= (1 << WGM13);
   TCCR1B |= (1 << WGM12);  // turn on CTC mode
   TCCR1B |= (1 << CS11);  // 8 prescaler: 0,5 microseconds at 16mhz
@@ -76,6 +77,7 @@ void update_ppm() {
 
 ISR(TIMER1_COMPA_vect) { //leave this alone
   static boolean state = true;
+  Serial.println(state);
 
   TCNT1 = 0;
 
@@ -90,7 +92,7 @@ ISR(TIMER1_COMPA_vect) { //leave this alone
 
   if (state) {  //start pulse
     digitalWrite(sigPin, onState);
-    OCR1A = PULSE_LENGTH;
+    OCR1A = PULSE_LENGTH * 2;
     state = false;
   } else { //end pulse and calculate when to start the next pulse
     static byte cur_chan_numb;
@@ -102,11 +104,11 @@ ISR(TIMER1_COMPA_vect) { //leave this alone
     if (cur_chan_numb >= CHANNEL_NUMBER) {
       cur_chan_numb = 0;
       calc_rest = calc_rest + PULSE_LENGTH;//
-      OCR1A = (FRAME_LENGTH - calc_rest);
+      OCR1A = (FRAME_LENGTH - calc_rest) * 2;
       calc_rest = 0;
     }
     else {
-      OCR1A = (ppm[cur_chan_numb] - PULSE_LENGTH);
+      OCR1A = (ppm[cur_chan_numb] - PULSE_LENGTH) * 2;
       calc_rest = calc_rest + ppm[cur_chan_numb];
       cur_chan_numb++;
     }
